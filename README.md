@@ -1,4 +1,4 @@
-# EPA-Air-Quality-Dispersion-Model-Documents
+# EPA-Air-Quality-Dispersion-Model-Documentation
 
 This repository contains an **UNOFFICIAL** archive of the United States Environmental Protection Agency's (EPA) air quality dispersion model documentation. The goal is to provide the community with easy access to these important resources.
 
