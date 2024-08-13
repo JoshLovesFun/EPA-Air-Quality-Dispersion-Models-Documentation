@@ -11,4 +11,4 @@ Anyone is welcome to fork this repository and make changes. However, please note
 
 ## Disclaimer
 
-This repository is not affiliated with or endorsed by the EPA. It serves solely as an archive of the EPA air quality dispersion model documentation for community use.
+This repository is not affiliated with or endorsed by the EPA. It serves solely as an archive of documentation for various EPA air quality dispersion models, providing access to these resources for community use.
