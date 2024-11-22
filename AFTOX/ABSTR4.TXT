@@ -1,0 +1,79 @@
+      PROGRAM ABSTRACT
+
+      A.  TITLE:  Air Force Toxic Chemical Dispersion Model 
+          (AFTOX) Version 4.1
+
+      B.  COMPUTER:  Zenith Z-248, Zenith Z-150, and 
+          Zenith Z-180-series laptop microcomputers and 
+          other EGA-equipped or CGA-equipped true IBM-PC 
+          compatibles.  Will not operate on Zenith Z-100, 
+          which is not a true IBM compatible.
+
+      C.  ENVIRONMENT:  Microsoft MS-DOS(TM) Version 3
+
+      D.  LANGUAGE:  Compiled Microsoft GW-BASIC(TM) 
+          Portions (C) Copyrighted Microsoft Corp (1986)
+
+      E.  MEMORY AND PERIPHERAL REQUIREMENTS:  Program, 
+          documentation files, and data requirements are contained 
+          on one floppy disk.  Peripherals include one 5 1/4" disk 
+          drive and a dot matrix printer if hardcopy contour plot 
+          is desired.
+
+      F.  DATE:  January 1993
+
+      G.  AUTHOR:  Mr Bruce Kunkel
+                   PL/GPAA
+                   Hanscom AFB, MA  01731-5000
+                   AV 478-2972
+
+           POC:    HQ AWS/XTX
+                   102 W. Losey St  Rm 105
+                   Scott AFB, IL 62225-5206
+                   AV 576-4598
+
+      H.  FUNCTIONAL AREA:  Weather
+
+      I.  FILES USED:
+
+         1.  Program Files:
+
+               AFTOX.EXE
+               DSP1.EXE
+               DSP2.EXE
+               DSPHP.EXE
+               DSP3.EXE
+
+         2.  Data Files:
+
+               SD.DAT
+               CH.DAT
+               AFT.DAT
+               CONCXY.DAT
+               EVAP.DAT
+               DEVICE.DAT
+
+         3.  Access Files:
+
+               SDFIL.EXE
+               CHFIL.EXE
+
+         4.  Supporting Files:
+
+               BRUN20G.EXE
+               PRINT.COM
+               PSCMPI.COM
+               PSCMX80.COM
+               PSCOKI.COM
+
+      J.  PROGRAM DESCRIPTION:  Program will compute hazard 
+          distances resulting from toxic chemical releases.  It 
+          handles instantaneous or continuous, gas or liquid 
+          releases from either ground or elevated sources.  
+          Program contains additional option for continuous heated
+          plumes from stacks.  User enters appropriate 
+          meteorological and source characterization data.  
+          Program outputs a toxic corridor plotted based
+          on specified concentrations, concentration at a 
+          specified point, or the location and value of the 
+          maximum concentration.

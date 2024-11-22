@@ -1,0 +1,775 @@
+
+                        DETAILED DOCUMENTATION
+
+                                 FOR
+
+                  USAF TOXIC CHEMICAL DISPERSION MODEL
+                          AFTOX VERSION 4.1
+
+
+                 Capt Clifton E. Dungey, HQ AWS/XTX
+
+                               5 Jan 93
+
+
+   A.  PROGRAM DESCRIPTION
+
+       1.  Purpose:  The USAF Toxic Chemical Dispersion Model 
+(AFTOX) will determine toxic chemical concentrations and give the 
+user the option of calculating a toxic corridor, the concentration 
+at a specific location, or the maximum concentration and its 
+location.
+
+        2.  Application:  AFTOX was developed for real time 
+analysis of non-buoyant, toxic chemical releases.  Use of AFTOX is 
+governed by AFR 355-1.  AFTOX is written so that Air Weather 
+Service (AWS) base weather stations can apply AFTOX to continuous 
+or instantaneous, gas or liquid releases from either ground or 
+elevated sources.  It can also be applied to heated plumes from 
+smokestacks.  AFTOX contains 130 chemicals on file and is able to 
+accept additional chemicals.
+
+       3.  Structure:  A detailed explanation of AFTOX is 
+contained in AFGL-TR-88-0009 and PL-TR-91-2119.  AFTOX is composed 
+of several executable main program files (.EXE files) which are 
+chained together for execution purposes.  The program files are 
+DSP1.EXE, DSP2.EXE, DSPHP.EXE, and DSP3.EXE.  The file  structure 
+and calculations performed by each file are as follows:
+
+           a.  DSP1:  This executable program file determines the 
+chemical  properties and meteorological conditions.  Schematic 
+representation is  shown in Figure 1.
+
+   Figure 1.  DSP1 Flow Diagram
+
+                           <Station Data>
+                                 |
+                           <Date and Time>
+                                 |
+                          <Type of Release> ----- buoyant plume
+                                 |                         |
+                    instantaneous or continuous            |
+                                 |                         |
+                          <Chemical Data>                  |
+                          _______|_______                  |
+                          |  CALCULATE  |                  |
+                          | Solar Angle |------------------|
+                                 |
+                 <Temperature, Wind, Cloud Amount>
+           ______________________|__________________________
+          DAY                                            NIGHT
+           |                                               |
+     <Cloud Type>                                          |
+   ________|_________                                      |
+   |   CALCULATE    |                                      |
+   |Solar Insolation|                                      |
+           |                                               |
+      snow cover? ------yes----->|                         |
+           |                     |                         |
+           no                    |                         |
+           |                     |                         |
+    <Ground Moisture> ---------->|<------------------------|
+                            _____|_____
+                            |CALCULATE|
+                            |Heat Flux|
+                                 |
+                        <Inversion Height>
+                _________________|__________________
+                |            CALCULATE             |
+                |Friction Velocity, 10-m Wind Speed|
+                |      Monin-Obukhov Length        |
+                       __________|__________
+                       |     CALCULATE     |
+                       |Stability Parameter| ---->buoyant plume
+                                 |                       |
+                 <Roughness Length at Spill Site>       EXIT
+                        _________|_________          to DSPHP
+                        |    CALCULATE    |
+                        |Properties of Air|
+                                 |
+                    chemical properties on file? ------->no
+                                 |                       |
+                                yes ------gas ---------->|
+                                 |                       |
+                              liquid                     |
+                       __________|__________             |
+                       |     CALCULATE     |             |
+                       |Chemical Properties| ---->EXIT to DSP2
+
+   Major computations of DSP1 are described as follows:
+
+               (1)  Solar elevation angle:  Determined using date, 
+time,  latitude, and longitude.
+
+               (2)  Sensible heat flux:  Determined by one of two 
+methods,  dependent on daytime or nighttime conditions.
+
+                     (a)  Daytime:  Cloud amount, temperature, 
+ground  moisture, and solar insolation (from solar angle, cloud 
+amount, and  cloud type) are used.
+
+                     (b)  Nighttime:  Cloud amount only is used.
+
+               (3)  Turbulence parameters:  Friction velocity, 10-
+meter wind  speed, and Monin-Obukhov length are interrelated and 
+are determined iteratively from initial estimates based on the 
+wind speed, heat flux,  surface pressure, and surface roughness.
+
+               (4)  Stability parameter:  One of two methods of 
+computation  are used.
+
+                     (a)  Method 1:  Turbulence parameters 
+described in (3)  above are used.
+
+                     (b)  Method 2:  Wind speed and standard 
+deviation of the  wind direction are used.
+
+               (5)  Air properties:  Density and viscosity are 
+computed from  temperature and pressure.
+
+               (6)  Chemical properties:  For a liquid chemical 
+which is in  the data file, the vapor pressure, liquid density, 
+and vapor density are  computed from the chemical data, the air 
+temperature, and pressure.
+
+           b.  DSP2:  This executable program file determines the 
+source  conditions (e.g., emission rate, duration of spill, area 
+of spill, and  source strength).  Processing through DSP2 is 
+dependent on type of  release.  The air temperature is compared to 
+the chemical's boiling point   to determine if it is a gaseous or 
+liquid spill.  If the chemical of  interest is not on file, 
+default settings may be used or user may input  molecular weight, 
+vapor pressure, and whether release is a liquid or gas  to 
+determine source strength.  Schematic representation of DSP2 is  
+shown in Figure 2.
+
+   Figure 2.  DSP2 Flow Diagram
+
+                                  DSP1
+                                    |
+                         Source strength known?----no---->|
+                                    |                     |
+                                    |               AFR 355-1,
+                                    |                AWSSUP 1
+                                    |                     |
+                                    |                 pause for
+                                   yes<--------------information
+                                    |
+                  __________________|_____________
+                  |                              |
+                 GAS                           LIQUID
+           <Height of Leak>                      |
+         _________|_________               ______|________
+         |                 |              |              |
+   continuous     instantaneous     continuous     instantaneous
+         |                 |              |              |
+<Emission Rate> <Amount Spilled> <Emission Rate> <Amount Spilled>
+         |           ______|___           |              |
+ <Spill Duration>   |CALCULATE|   <Spill Duration>       |
+  _____|_____       |   Area  |      _____|_____         |
+  |CALCULATE|       _____|_____      |CALCULATE|      <Area>
+  |  Amount |       |CALCULATE|      |  Amount |         |
+  | Spilled |       |  Source |      | Spilled |         |
+       |            | Strength|           |              |
+       |                              <-------->         |
+       |                 |       _____|____    |         |
+       |                 |      |CALCULATE|  <Area>      |
+       |                 |      |  AREA   |    |         |
+       |                 |           |         |         |
+       |                 |           |      <Pool Temp>->|
+       |                 |           |                   |
+       |                 |   Evaporation rate=           |
+       |                 |       spill rate              |
+       |                 |           |                   |
+       |                 |  Evaporation time=            |
+       |                 |      spill time               |
+       |                 |           |                   |
+       |                 |    Change area?-yes->|        |
+       |                 |       |              |        |
+       |                 |      no           <Area>      |
+       |                 |       |              |  ______|______
+       |                 |       |              |->| CALCULATE |
+       |                 |       |                 |Evaporation|
+       |                 |       |                 |    Rate   |
+       |                 |       |                 ______|______
+       |                 |       |                 | CALCULATE |
+       |                 |       |                 |Evaporation|
+       |                 |       |                 |    Time   |
+       |                 |       |                       |
+       |---------------->|------>|-->|<------------------|
+                                     |
+                               EXIT to DSP3
+
+               (1)  Continuous gas release:  Uses the emission 
+rate and the  total time of the spill to compute the total amount 
+spilled.  The source  strength is the evaporation rate.
+
+               (2)  Instantaneous gas release:  Uses the amount 
+spilled and  air density to determine the initial volume of the 
+spill.
+
+               (3)  Continuous liquid release:  The evaporation 
+rate into the atmosphere is the source strength.  If the area of 
+the spill is known, it is used to determine the evaporation rate.  
+If the area is unknown, an area is calculated assuming a pool 
+depth of 1/4 inch.  For example, 1 cubic foot of liquid will cover 
+a 48 square foot area if allowed to spread out to a depth of 1/4 
+inch over a flat surface.  Then the emission rate is set equal to 
+the evaporation rate based on the  calculated area.  If this 
+calculated area appears unreasonably large as compared with the 
+observed spill, the user may input a smaller area  which will give 
+a new evaporation rate.  An alternate method exist for  chemicals 
+without full data information.  Evaporation rate is determined 
+using spill area, pool temperature, chemical molecular weight, and 
+vapor pressure.  If variables are unknown, the model assumes the 
+worst case and the evaporation rate is set equal to the emission 
+rate.
+
+               (4)  Instantaneous liquid release:  Uses the amount 
+spilled, area covered, chemical, and air properties to compute the 
+evaporation rate.  The source strength is set equal to the 
+evaporation rate.  The amount spilled and the evaporation rate 
+determine the total evaporation time.  The alternate method listed 
+in (3) above is used if chemical data is not available.
+
+           c.  DSPHP:  This executable program file determines the 
+source conditions for a buoyant plume from a stack (e.g., emission 
+rate, duration of spill, height of spill).  Source strength is set 
+equal to the emission rate.  As shown in Figure 3, atmospheric 
+conditions determine processing through the module.
+
+   Figure 3.  DSPHP Flow Diagram
+
+                              DSP1
+                                |
+                        <Molecular Weight>
+                                |
+                         <Emission Rate>
+                                |
+                   effluent still being emitted?----no--->|
+                                |                         |
+                               yes                 <Elapsed time
+                                |                   of emission>
+                                |                         |
+                         <Stack Height>----------<--------|
+                                |
+                   Stack height above inversion?---yes--->|
+                                |                         |
+                               no                         |
+                                |                        END
+                      <Gas Stack Temperature>
+                                |
+                        <Volume Flow Rate>
+                                |
+                         _______|_______
+                         |  CALCULATE  |
+                         |Buoyancy Flux|
+                         _______|_______
+                         |  CALCULATE  |
+                         | Equilibrium |
+                         |  Distance   |
+                         _______|_______
+                         |  CALCULATE  |
+                         | Equilibrium |
+                         |   Height    |
+                                |
+                    ____________|___________
+                    |       CALCULATE      |
+                    |Effective Plume Height|
+                                |
+                     effective height greater
+                      than inversion height? ---no-->|
+                                |                    |
+                               yes                   |
+                      __________|___________         |
+                      |Set Effective Height|         |
+                      |to Inversion Height |         |
+                                |                    |
+                            EXIT TO DSP3 <-----------|
+
+               (1)  If the stack height is above the inversion, 
+then the program terminates since surface input meteorological 
+conditions most likely do not apply above the inversion.
+
+               (2)  Buoyancy flux:  It is determined using the air 
+temperature, gas stack temperature, volume flow rate, and 
+gravitational acceleration.
+
+               (3)  Unstable or neutral conditions:  The buoyancy 
+flux is used to compute the distance downstream where the 
+equilibrium height is reached.  This distance, the buoyancy flux, 
+and wind speed determine the equilibrium height.
+
+               (4)  Stable conditions:  The buoyancy flux, wind 
+speed, and potential temperature lapse rate (based on the degree 
+of stability) are used to compute the equilibrium height.  
+Downwind distance where equilibrium height occurs is not needed.
+
+               (5)  Effective plume height:  This is equal to the 
+sum of the equilibrium height and stack height above ground.  
+Model assumes gas is released at the effective height for 
+dispersion calculations.  If the effective height is above the 
+inversion height, it is set equal to the inversion height.  This 
+is a conservative approach for calculating ground concentrations.
+
+           d.  DSP3:  This executable program file computes the 
+toxic corridor (determined by concentration), concentration at a 
+given location and time, or maximum concentration and location, 
+and outputs the results.  The type of output determines the 
+processing through the file, as shown in the flow diagram of 
+Figure 4.
+
+   Figure 4.  DSP3 Flow Diagram
+
+                          DSP2 or DSPHP
+                               |
+                 <Concentration averaging time>
+                               |
+               <Elapsed time since start of spill>
+        _______________________|________________________
+        |                      |                        |
+     OPTION 1               OPTION 2                 OPTION 3
+(toxic corridor)     (point concentration)   max concentration)
+        |                      |                        |
+ <Concentration             <Height>                 <Height>
+   of Interest>                |                        |
+        |             <Downwind Distance>               |
+     <Height>        <Crosswind Distance>               |
+        |                      |                        |
+ |----->|--------X=X+DX------->|<--------X=X+DX---------|<-|
+ |                      _______|_______                    |
+ |                      |  CALCULATE  |                    |
+ |                      | Dispersion  |                    |
+ |   |--Y=Y+DY--------->|Coefficients |                   no
+ |   |                  |     and     |                    |
+ |   |                  |Concentration|                    |
+ |   |        |<-----------|   |   |----------------> maximum?
+ |  no        |                |                           |
+ |   |  equals contour         |                           |
+ |   |<-concentration?         |                          yes
+ |            |                |                           |
+ |           yes               |                           |
+ |            |                |                           |
+ |    plot concentration       |                           |
+ |            |                |                           |
+ |<--no--plot complete?        |                           |
+              |                |                           |
+             yes               |                           |
+              |                |                           |
+           OUTPUT           OUTPUT                      OUTPUT
+        contour plot     concentration             concentration
+      max distance for         |                   and distance
+        each contour           |                           |
+              |                |                           |
+           CHANGE?          CHANGE?                    CHANGE?
+      met conditions    spill duration            spill duration
+     source conditions      location                   height
+           height            option                    option
+          contours             |                           |
+       spill duration          |                           |
+concentration averaging time   |                           |
+           option              |                           |
+            scale              |                           |
+            time               |                           |
+              |                |                           |
+              |--------------->-<--------------------------|
+                               |
+                             EXIT
+
+               (1)  Chemical concentration computations are 
+identical for each output option.  Dispersion coefficients are 
+determined using the stability parameter and the surface roughness 
+length.  Concentration is then determined using the dispersion 
+coefficients, elapsed time of the spill, wind speed, source 
+strength, source height, and inversion height.  Locations are 
+determined using an X-Y coordinate system with the origin at the 
+source site and oriented so the X-axis is in the downwind 
+direction and the Y-axis is perpendicular in the crosswind 
+direction.
+
+               (2)  Option 1:  This contours user-specified 
+concentration (up to 3 contours) and plots the toxic corridor for 
+the lowest concentration requested.  At each distance along the X 
+axis, the model computes the concentration and checks to see if it 
+exceeds the user specified concentration.  If so, concentrations 
+are computed for increasing values of Y until the position of the 
+user specified concentration is located.  This location is plotted 
+and the procedure is repeated at the next incremental value of X.  
+When the plot is complete, the maximum distance for the 
+concentration of interest is displayed.  The entire process is 
+then repeated for the next specified concentration.
+
+               (3)  Option 2:  This outputs the concentration at a 
+user specified location (defined by the height, downwind and 
+crosswind distances).
+
+               (4)  Option 3:  This outputs the maximum 
+concentration and its distance from the source for a user 
+specified height.  Due to model assumptions that the maximum 
+concentration will be along the X-axis, concentrations are 
+calculated for increasing values of X until the maximum is 
+located.
+
+               (5)  At the completion of each option, the user may 
+change the following input data:
+
+                     (a)  Option 1:  time, meteorological 
+conditions, source conditions, scale, concentration averaging 
+time, elapsed time since the start of the spill, contours, height 
+of interest, and output option.
+
+                     (b)  Option 2:  elapsed time, location, and 
+option.
+
+                     (c)  Option 3:  elapsed time, height, and 
+option.
+
+   If the scale on option 1 is changed, the plume is replotted.  
+For all other input changes, AFTOX recycles to the point where the 
+data is input while holding all other data constant and 
+reaccomplishes all computations which require the changed data.
+
+       4.  Files Used:  The files used and their functions are 
+listed in Tables 1.  Multiple files are used due to storage 
+limitations of the GW-BASIC(tm) compiler.  CHAIN statements are 
+used to link the files.
+
+             Table 1.  Files and functions for AFTOX Version 4.1
+   -------------------------------------------------------------
+   Program Files:
+     AFTOX.EXE     3 Nov 92     Introduction
+     DSP1.EXE      2 Nov 92     Defines chemical properties and
+                                meteorological conditions
+     DSP2.EXE      2 Nov 92     Defines source conditions
+     DSPHP.EXE    27 Oct 92     Defines buoyant plume source
+                                conditions
+     DSP3.EXE      2 Nov 92     Computes hazard area, concentra-
+                                tions, and outputs results
+
+   Data Files:
+     SD.DAT                     Station data
+     CH.DAT                     Chemical data
+     AFT.DAT                    Stores all input and output data
+     CONCXY.DAY                 File for storing x and y positions
+                                of concentration contour
+     DEVICE.DAT                 Contains information on computer 
+                                and screen type.
+
+   Ancillary Files:
+     SETUP.EXE    26 Dec 90     Established computer and screen
+                                type
+     SDFIL.EXE     1 Aug 92     Changes data in station data file
+     CHFIL.EXE    31 May 91     Changes data in chemical data
+                                files
+
+   Supporting Files:
+     BRUN20G.EXE                GW-BASIC(tm) Compiler Run-time 
+
+   Library
+     PSCMPI.COM                 Utility for MPI printer
+     PSCMX80.COM                Utility for MX-80 printer
+     PSCOKI.COM                 Utility for OKIDATA printer
+
+
+
+   B.  GENERAL INFORMATION
+
+       1.  Version:
+
+           a.  This detailed documentation describes Version 4.1.
+
+           b.  AFTOX Version 4.1 is designed to run on a Zenith Z-
+248 microcomputer, equipped with EGA video, running the Microsoft 
+MS-DOS(tm) 3 operating system.  It may operate on other true IBM-
+PC compatibles using EGA video and MS-DOS(tm) 3.
+
+           c.  AFTOX Version 4.1 also runs on the Zenith Z-180-
+series laptop microcomputers, equipped with CGA video, running the 
+Microsoft MS-DOS(tm) 3 operating system.  Version 4.1 may operate 
+on other true IBM-PC compatibles using CGA video and MS-DOS(tm) 3, 
+such as the Zenith Z-150 series.  Version 4.1 will not run on the 
+Zenith Z-100 microcomputers, which are not true IBM compatibles.
+
+       2.  Language Used:  Microsoft GW-BASIC(tm) programming 
+language.  The Microsoft GW-BASIC(tm) compiler has been used to 
+prepare the executable program files (.EXE files) from BASIC 
+source code files (.BAS files), and the executable files are 
+provided to the user, so no BASIC compilation or interpretation is 
+needed to run AFTOX.  The version of AFTOX described here is the 
+version dated Jan 1993.  File creation dates of the executable 
+files directly related to AFTOX are given in Table 1 above.
+
+       3.  Number of lines of code in Version 4.1:  There are a 
+total of 3257 lines of source code, subdivided among the program 
+files as follows:
+
+                          Lines of
+           Module     BASIC Source Code     Executable Code
+
+           AFTOX           115                 AFTOX.EXE
+           DSP1            889                 DSP1.EXE
+           DSP2            728                 DSP2.EXE
+           DSPHP           163                 DSPHP.EXE
+           DSP3           1449                 DSP3.EXE
+
+       4.  Memory and Disk Storage Requirements:  Executable code 
+and documentation files are contained on one 5 1/4" double-sided, 
+double-density floppy diskette.
+
+       5.  Peripheral Requirements:  One 5 1/4" floppy disk drive 
+and a dot matrix printer if hardcopy contour plot is desired.
+
+   C.  TECHNICAL BACKGROUND
+
+       1.  Scientific Theory:  The basic equation used by AFTOX 
+for dispersion is the Gaussian puff equation.  The equation 
+assumes that the material is conserved during transport and 
+diffusion, and further assumes that the distribution of 
+concentration within the puff is Gaussian.  Horizontal and 
+vertical dispersion parameters are contained within the Gaussian 
+puff equation and are used to statistically estimate the 
+dispersion of the plume.  Determination of the stability and the 
+chemical source strength are based on accepted scientific 
+theories.  Refer to AFGL-TR-88-0009 or PL-TR-91-2119 for a 
+detailed description of the scientific theory used by the model.
+
+       2.  Equations and Algorithms:  All equations, with 
+variables and constants, are listed and defined in AFGL-TR-88-
+0009.
+
+       3.  Accuracy and Limitations:  AFTOX has wide 
+applicability.  Unlike many methods developed for specific 
+situations, AFTOX can be used equally for all atmospheric 
+stability conditions and release scenarios.  However, caution must 
+be used in interpreting the results.  Although experience has 
+shown that Gaussian equation models are best suited for most 
+applications, one of their limitations is that calculated 
+distances for concentration values are average values.  In order 
+to alleviate this potential problem, 90 percent confidence level 
+contour (i.e., the toxic corridor) is given.  The toxic corridor 
+is plotted for all types of releases and represents, to the 90% 
+confidence level, the furthest extent of the chemical 
+concentration requested by the user.
+
+   D.  PROGRAM MAINTENANCE
+
+       1.  Conventions:  AFTOX is a fully interactive, user-
+friendly program.  Default responses to AFTOX prompts and 
+questions are displayed to the user in brackets.  No input other 
+than <RETURN> (the <ENTER> or <RETURN> key on the microcomputer 
+keyboard) is required to accept these responses.  All other input 
+is done by typing in a response, followed by <RETURN>, to 
+questions asked interactively by the program.
+
+       2.  Variable Names:
+
+ Variable      Definition
+
+ A         area of spill (m2 or ft2)
+ AD        liquid density coefficient
+ ALB       albedo
+ AMW       molecular weight of stack affluent
+ ANGMAT    wind direction adjustment for plot
+ AO        flag for (1) print or (2) save/print
+ ASP       aspect ratio for plot
+ AT        concentration averaging time (min)
+ BD        liquid density constant
+ BR        vapor pressure constant
+ CC        cloud category (1-high 2-middle 3-low)
+ CHM$      chemical name
+ CLOUD     cloud amount in eighths
+ CMIN      smallest concentration of interest (mg m-3)
+ CMTC      convective mass transfer coefficient (m/s)
+ CONC      concentration at a given point (mg m-3)
+ CONCEN    concentration at a given point (ppm)
+ CONCI(I)  array of concentrations to plot (mg m-3)
+ CONCP(I)  array of concentrations to plot (ppm)
+ CONCMI    minimum concentration (mg m-3)
+ CONCMX    maximum concentration (mg m-3)
+ CONCON    concentration conversion factor
+ CR        vapor pressure constant
+ CSA       cosine of ANGMAT
+ CT1       lag that allows user to back up to inversion height
+           input
+ DFT       difference between Greenwich and local standard time
+ DIFUS     diffusion coefficient (cm2/s)
+ DLIQ      chemical liquid density (g cm-3)
+ DTE$      date
+ DVAP      chemical vapor density (g cm-3)
+ DW        ground moisture (1-dry 2-wet)
+ DX        downwind distance increment (km)
+ DZ        buoyant plume height above stack (m)
+ EOK       energy of molecular interaction (J)
+ F         buoyancy flux (m4 s-3)
+ FAK       DX factor
+ G         soil heat flux (W m-2)
+ H         height of leak or effective emission height (m)
+ HET       station elevation (m)
+ HF        sensible heat flux (W m-2)
+ HIFT      height of inversion base (ft)
+ HINV      height of inversion base (m)
+ HS        stack height (m or ft)
+ HTCONV    convective heat transfer rate (W/min)
+ HYGFAC    hydrazine factor used in alternate evaporation formula
+ ISTAT     spill type
+ IUCON     code for concentration units (1-mg m-3 2-ppm)
+ IUNCO     flag for chemical mol.  wt.  (0-known 1-unknown)
+ IUNIT     flag for units used (1-metric 2-English)
+ K         total no.  of overlapping puffs for given location
+ LA        station latitude
+ LO        station longitude
+ LX        natural log of X
+ MP        mass of pollutant per puff (g)
+ MU        dynamic viscosity (g/cm-s)
+ MW        molecular weight of chemical
+ MWA       molecular weight of dry air
+ N         station number in SD.DAT
+ NN        chemical number in CHEM.DAT and CH.DAT
+ NNNN      number of contour plots
+ NP        number of puffs/min
+ NS        flag for new scale
+ NU        index number for spilled chemical
+ NUM       station number of interest
+ OPT       option number for output
+ OPTN      sigma theta flag (1-unknown 2-known)
+ PC        critical pressure (atm)
+ PRES      atmospheric pressure (mb)
+ PRT       flag for printing contour plot (1-printout requested)
+ Q         net radiation at surface (W m-2)
+ QPIPE     emission rate for continuous spill (g/min)
+ QSPO      evaporation rate for instantaneous liquid spill (g/min)
+ QSS       source strength (g/min)
+ RATE      the kernal to be integrated to find concentration
+ RCONS     gas constant for dry air (erg/mol K)
+ RENL      Reynolds number for instantaneous liquid spill
+ RENNL     Reynolds number for laminar flow
+ RENNT     Reynolds number for turbulent flow
+ RHO       air density (g m-3)
+ SAN       angle of safety zone (deg)
+ SCALE     scale of contour plot (km or mi)
+ SCN       Schmidt number
+ SHNL      Sherwood number
+ SIG       effective diameter of molecule (A)
+ SIGTH     sigma theta (standard deviation of wind direction)
+ SIGZ      vertical diffusion coefficient before roughness
+           correction
+ SN$       station name
+ SOLAL     solar angle (deg)
+ SR        solar radiation factor
+ STB       stability parameter
+ STBV      vertical stability parameter
+ SX        horizontal diffusion coefficient = SY
+ SY        horizontal diffusion coefficient
+ SZ        vertical diffusion coefficient
+ T         elapsed time since start of spill (min)
+ TA        air temperature (C)
+ TAK       air temperature (K)
+ TB        chemical boiling point (K)
+ TC        chemical critical temp (C)
+ THETA     angle of tic mark (deg)
+ TMSP      total mass spilled (g)
+ TNU       total number of chemicals listed in CHEM.DAT and CH.DAT
+ TP        pool temperature (C)
+ TPUFF     total number of puffs
+ TRAVT     travel time to X+4SX (s)
+ TRAVTI    travel time to X-4SX (s)
+ TS        gas stack temperature (C or F)
+ TTSP      total time of spill (min)
+ TTT       flag in DSP3 for changing parameter
+ TW(1)     time weighted average exposure limit (ppm)
+ TW(2)     time weighted average exposure limit (mg m-3)
+ TW(3)     short term exposure limit (ppm)
+ TW(4)     short term exposure limit (mg m-3)
+ U         wind speed at 10 m height (m/s)
+ UU        wind speed at height ZW (m/s)
+ U9        flag indicating new met conditions have been entered
+ VC        chemical critical volume (cm3/g-mole)
+ VF        stack volume flow rate (m3/min or ft3/min)
+ VISCK     kinematic viscosity of air (cm3/s)
+ VP        chemical vapor pressure (atm)
+ WAT       wind averaging time (min)
+ WD        wind direction (deg)
+ WDTHL     width of spill assuming laminar flow (m)
+ WDTHT     width of spill assuming turbulent flow (m)
+ WWIDTH    width of spill (m)
+ X         downwind distance (km)
+ XMX       maximum distance for a given concentration (km)
+ XO        initial downwind distance (0.1 km)
+ XS(I)     X position of current concentration contour
+ XS1(I)    X position of contour 1
+ XS2(I)    X position of contour 2
+ XS3(I)    X position of contour 3
+ XST       equilibrium downwind distance for buoyant plume (m)
+ XY        X + virtual distance
+ Y         crosswind distance (m)
+ YO        initial crosswind distance (m)
+ YS(I)     Y position of current concentration contour
+ YS1(I)    Y position of contour 1
+ YS2(I)    Y position of contour 2
+ YS3(I)    Y position of contour 3
+ YSM(I)    = -YS(I)
+ Z         receptor height (m)
+ ZO        spill site roughness length (cm)
+ ZOO       wind site roughness length (cm)
+ ZW        height of wind measurement (m)
+
+       3.  Guidelines to Assist Validation:  AFTOX has been 
+through several revisions based upon technical evaluations and 
+user comments from field testing.  HQ AWS/XTX has reviewed the 
+software and has found the versions described in this document 
+technically sound.
+
+       4.  Error Handling:  During revisions and field testing, 
+errors and possible problem areas were identified and corrected.  
+All problems identifiable at this level of testing have been 
+accounted for.  It is not possible to test all possible 
+paths/options in programs as complicated as this one; instead, the 
+operationally most common paths/options are tested and asymptotic 
+input values are submitted.  Some errors may have gotten through 
+our testing.  If errors are detected during operational use, they 
+should be brought through channels to the attention of:
+
+           HQ AWS/XTX
+           102 W. Losey Street, Room 105
+           Scott AFB IL 62225-5206
+           (DSN 576-4598)
+
+       5.  Pseudocode and File Structure:  See schematic 
+representation in section A.3 for illustration of structure and 
+processing sequence.
+
+       6.  Special Maintenance Considerations:  none
+
+   E.  OTHER INFORMATION
+
+       1.  Security Requirements:  none
+
+       2.  Privacy Act Considerations:  none
+
+       3.  Copyright Information:  AFTOX is written in compiled 
+Microsoft GW-BASIC(tm).  The executable (filename.EXE) program 
+files result from compilations of GW-BASIC(tm) source code and 
+hence require the GW-BASIC(tm) Compiler Run-time Library 
+(BRUN20G.EXE) to execute.  Under special agreement with Microsoft, 
+the GW-BASIC(tm) Compiler Run-time Library is distributed with 
+AFTOX.  The resulting distribution diskette carries external 
+markings, and the executable code displays a message to the effect 
+that "Portions (C) Copyrighted Microsoft Corp (1986)."  The 
+"portions" referred to are, of course, the GW-BASIC(tm) Run-time 
+Library (BRUN20G.EXE), which cannot be further distributed except 
+as a member of the AFTOX distribution software.
+
+   F.  ADMINISTRATIVE DETAILS
+
+       1.  POC:  HQ AWS/XTX
+                 102 W. Losey Street, Room 105
+                 Scott AFB IL 62225-5206
+                 (DSN 576-4721)
+
+       2.  Configuration Manager:  AWS/SCR
+
+   This program has been validated and satisfactorily performs the 
+function for which it was designed.  It is approved for release to 
+all government agencies and supported contractors.
+
+APPROVAL AUTHORITY___________________________DATE__________________
